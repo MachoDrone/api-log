@@ -1,5 +1,5 @@
 #!/bin/bash
-# Add Host Address at the top
+# Linux Version
 echo "Host Address: $(docker logs -t nosana-node | grep 'Wallet:' | awk '{print $3}')" > api-logs.txt
 echo "" >> api-logs.txt
 
@@ -17,10 +17,6 @@ if grep -qi Microsoft /proc/version || grep -qi WSL /proc/version; then
     echo -e "\033[31mTHIS SCRIPT IS MEANT FOR NATIVE UBUNTU LINUX, NOT WINDOWS WSL2.. use the correct script for your OS\033[0m" | tee -a api-logs.txt
 fi
 
-# Trim to 9.5 MB (9961472 bytes) for Discord safety
 tail -c 9961472 api-logs.txt > api-logs-trimmed.txt && mv api-logs-trimmed.txt api-logs.txt
-
-# Show final size (after trimming)
 ls -ralsh api-logs.txt >> api-logs.txt
-
 cat api-logs.txt

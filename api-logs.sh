@@ -1,7 +1,7 @@
 #!/bin/bash
 # # ---------- Command Template Script ----------
 
-REQUIRE_DISCORD_USERNAME=1  # Set to 0 to disable Discord username prompt
+REQUIRE_DISCORD_USERNAME=0  # Set to 0 to disable Discord username prompt
 
 # Prompt for Discord username (force prompt, prevent blank)
 if [ "${REQUIRE_DISCORD_USERNAME:-1}" -eq 1 ]; then

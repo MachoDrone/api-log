@@ -1,7 +1,12 @@
 #!/bin/bash
 # # ---------- Command Template Script ----------
-# Prompt for Discord username
-read -p "Please add your Discord username: " discord_user
+
+# Prompt for Discord username (force prompt, prevent blank)
+while true; do
+  read -p "Please add your Discord username: " discord_user </dev/tty
+  [ -n "$discord_user" ] && break
+  echo "Discord username cannot be blank."
+done
 
 # Generate UTC timestamped filename and variable
 timestamp=$(date -u +%Y%m%dT%H%M%SZ)

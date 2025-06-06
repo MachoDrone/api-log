@@ -44,7 +44,12 @@ print_host_line() {
   echo
 
   echo "Docker logs (24hr):"
-  docker logs --timestamps --since 24h nosana-node 2>&1 | grep -C 21 "API proxy is offline, restarting.." | grep -v "Error response from daemon: No such container:" | grep -v "command not found"
+  docker_logs=$(docker logs --timestamps --since 24h nosana-node 2>&1 | grep -C 21 "API proxy is offline, restarting.." | grep -v "Error response from daemon: No such container:" | grep -v "command not found")
+  if [ -n "$docker_logs" ]; then
+    echo "$docker_logs"
+  else
+    echo 'No "API proxy is offline, restarting.." events found in the last 24 hours.'
+  fi
   echo
 
   echo "docker ps:"
@@ -97,7 +102,8 @@ print_host_line() {
 
 } > "$logfile"
 
-tail -c 9961472 "$logfile" > "${logfile%.log}-trimmed.log" && mv "${logfile%.log}-trimmed.log" "$logfile"
+# trim logs (e.g. 9961472 = 9.5MB)
+# tail -c 9961472 "$logfile" > "${logfile%.log}-trimmed.log" && mv "${logfile%.log}-trimmed.log" "$logfile"
 ls -ralsh "$logfile" >> "$logfile"
 
 # --- Auto-upload log ---

@@ -24,6 +24,18 @@ mapfile -t host_addrs < <(
   sed -r 's/\x1B\[[0-9;]*[mK]//g'
 )
 
+# ---------- START OF COMMANDS TO PLACE IN LOG ----------
+REQUIRE_API_OFFLINE=0  # Set to 1 to require API offline event, 0 to always upload
+
+# Check for API offline event if required
+docker_logs=$(docker logs --timestamps --since 24h nosana-node 2>&1 | grep -C 21 "API proxy is offline, restarting.." | grep -v "Error response from daemon: No such container:" | grep -v "command not found")
+if [ "${REQUIRE_API_OFFLINE:-0}" -eq 1 ] && [ -z "$docker_logs" ]; then
+  echo 'No "API proxy is offline, restarting.." events found in the last 24 hours.'
+  echo "No API offline events found. Script will exit and not upload logs."
+  exit 0
+fi
+# ---------- END OF COMMANDS TO PLACE IN LOG ----------
+
 # Function to print Host line in new format
 print_host_line() {
   local addr="$1"
@@ -45,25 +57,15 @@ print_host_line() {
     echo "Running on native Linux"
   fi
   date -u
-# ---------- START OF COMMANDS TO PLACE IN LOG ----------
-REQUIRE_API_OFFLINE=0  # Set to 1 to require API offline event, 0 to always upload
 
   echo "Collection of logs for API offline, restarting..."
   echo
 
   echo "Docker logs (24hr):"
-  docker_logs=$(docker logs --timestamps --since 24h nosana-node 2>&1 | grep -C 21 "API proxy is offline, restarting.." | grep -v "Error response from daemon: No such container:" | grep -v "command not found")
   if [ -n "$docker_logs" ]; then
     echo "$docker_logs"
   else
     echo 'No "API proxy is offline, restarting.." events found in the last 24 hours.'
-    if [ "${REQUIRE_API_OFFLINE:-0}" -eq 1 ]; then
-      echo
-      echo "No API offline events found. Script will exit and not upload logs."
-      # Write a marker file so the main script can detect and exit
-      echo "NO_UPLOAD" > /tmp/nosana_no_upload_marker
-      exit 2
-    fi
   fi
   echo
 
@@ -104,8 +106,6 @@ REQUIRE_API_OFFLINE=0  # Set to 1 to require API offline event, 0 to always uplo
     echo
   fi
 
-# ---------- END OF COMMANDS TO PLACE IN LOG ----------
-
   # Bottom of log: print username and Host line again
   echo "Discord username: $discord_user"
   print_host_line "${host_addrs[0]}"
@@ -116,14 +116,6 @@ REQUIRE_API_OFFLINE=0  # Set to 1 to require API offline event, 0 to always uplo
   echo
 
 } > "$logfile"
-
-# Check for marker file and exit if present (no upload)
-if [ -f /tmp/nosana_no_upload_marker ]; then
-  echo
-  echo "No API offline events found in the last 24 hours. No log was uploaded."
-  rm -f /tmp/nosana_no_upload_marker "$logfile"
-  exit 0
-fi
 
 # --- Auto-upload log ---
 # Fetch parts for upload label and segment

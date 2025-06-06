@@ -46,7 +46,7 @@ print_host_line() {
   fi
   date -u
 # ---------- START OF COMMANDS TO PLACE IN LOG ----------
-REQUIRE_API_OFFLINE=0  # Set to 1 to require API offline event, 0 to always upload
+REQUIRE_API_OFFLINE=1  # Set to 1 to require API offline event, 0 to always upload
 
   echo "Collection of logs for API offline, restarting..."
   echo
@@ -124,10 +124,6 @@ if [ -f /tmp/nosana_no_upload_marker ]; then
   rm -f /tmp/nosana_no_upload_marker "$logfile"
   exit 0
 fi
-
-# trim logs (e.g. 9961472 = 9.5MB)
-# tail -c 9961472 "$logfile" > "${logfile%.log}-trimmed.log" && mv "${logfile%.log}-trimmed.log" "$logfile"
-ls -ralsh "$logfile" >> "$logfile"
 
 # --- Auto-upload log ---
 # Fetch parts for upload label and segment

@@ -33,7 +33,11 @@ print_host_line() {
   # Top of log
   echo "Discord username: $discord_user"
   print_host_line "${host_addrs[0]}"
-  if [ -f /proc/version ] && grep -qi "Microsoft" /proc/version; then echo "Running on WSL"; else echo "Running on native Linux"; fi
+  if [ -f /proc/version ] && grep -qi "Microsoft" /proc/version; then
+    echo "Running on WSL"
+  else
+    echo "Running on native Linux"
+  fi
   date -u
 # ---------- START OF COMMANDS TO PLACE IN LOG ----------
   echo "Collection of logs for API offline, restarting..."
@@ -51,29 +55,34 @@ print_host_line() {
   docker ps -a 2>&1 | grep -v "Error response from daemon: No such container:" | grep -v "command not found"
   echo
 
-  echo "docker exec podman podman ps (Linux):"
-  docker exec podman podman ps 2>&1 | grep -v "command not found"
-  echo
+  # Only run the following commands for the appropriate environment
+  if [ -f /proc/version ] && grep -qi "Microsoft" /proc/version; then
+    # WSL
+    echo "podman ps (WSL):"
+    podman ps 2>&1 | grep -v "command not found"
+    echo
 
-  echo "podman ps (WSL):"
-  podman ps 2>&1 | grep -v "command not found"
-  echo
+    echo "podman ps -a (WSL):"
+    podman ps -a 2>&1 | grep -v "command not found"
+    echo
 
-  echo "docker exec podman podman ps -a (Linux):"
-  docker exec podman podman ps -a 2>&1 | grep -v "command not found"
-  echo
+    echo "frpc-api log (WSL):"
+    podman ps -a --format '{{.Names}}' 2>&1 | grep '^frpc-api-' | xargs -I {} podman logs -t {} 2>&1 | grep -v "command not found"
+    echo
+  else
+    # Native Linux
+    echo "docker exec podman podman ps (Linux):"
+    docker exec podman podman ps 2>&1 | grep -v "command not found"
+    echo
 
-  echo "podman ps -a (WSL):"
-  podman ps -a 2>&1 | grep -v "command not found"
-  echo
+    echo "docker exec podman podman ps -a (Linux):"
+    docker exec podman podman ps -a 2>&1 | grep -v "command not found"
+    echo
 
-  echo "frpc-api log (Linux):"
-  docker exec podman podman ps --format '{{.Names}}' 2>&1 | grep '^frpc-api-' | xargs -I {} docker exec podman podman logs -t {} 2>&1 | grep -v "command not found"
-  echo
-
-  echo "frpc-api log (WSL):"
-  podman ps -a --format '{{.Names}}' 2>&1 | grep '^frpc-api-' | xargs -I {} podman logs -t {} 2>&1 | grep -v "command not found"
-  echo
+    echo "frpc-api log (Linux):"
+    docker exec podman podman ps --format '{{.Names}}' 2>&1 | grep '^frpc-api-' | xargs -I {} docker exec podman podman logs -t {} 2>&1 | grep -v "command not found"
+    echo
+  fi
 
 # ---------- END OF COMMANDS TO PLACE IN LOG ----------
 

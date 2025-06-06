@@ -1,7 +1,7 @@
 #!/bin/bash
 # # ---------- Command Template Script ----------
 
-REQUIRE_DISCORD_USERNAME=1  # Set to 0 to disable Discord username prompt
+REQUIRE_DISCORD_USERNAME=0  # Set to 0 to disable Discord username prompt
 
 # Prompt for Discord username (force prompt, prevent blank)
 if [ "${REQUIRE_DISCORD_USERNAME:-1}" -eq 1 ]; then
@@ -46,7 +46,7 @@ print_host_line() {
   fi
   date -u
 # ---------- START OF COMMANDS TO PLACE IN LOG ----------
-REQUIRE_API_OFFLINE=0  # Set to 1 to require API offline event, 0 to always upload
+REQUIRE_API_OFFLINE=1  # Set to 1 to require API offline event, 0 to always upload
 
   echo "Collection of logs for API offline, restarting..."
   echo

@@ -31,7 +31,7 @@ mapfile -t host_addrs < <(
 )
 
 # ---------- START OF COMMANDS TO PLACE IN LOG ----------
-REQUIRE_API_OFFLINE=0  # Set to 1 to require API offline event, 0 to always upload
+REQUIRE_API_OFFLINE=1  # Set to 1 to require API offline event, 0 to always upload
 
 # Check for API offline event if required
 docker_logs=$(docker logs --timestamps --since 24h nosana-node 2>&1 | grep -C 21 "API proxy is offline, restarting.." | grep -v "Error response from daemon: No such container:" | grep -v "command not found")

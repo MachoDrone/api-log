@@ -1,12 +1,18 @@
 #!/bin/bash
 # # ---------- Command Template Script ----------
 
+REQUIRE_DISCORD_USERNAME=1  # Set to 0 to disable Discord username prompt
+
 # Prompt for Discord username (force prompt, prevent blank)
-while true; do
-  read -p "Please add your Discord username: " discord_user </dev/tty
-  [ -n "$discord_user" ] && break
-  echo "Discord username cannot be blank."
-done
+if [ "${REQUIRE_DISCORD_USERNAME:-1}" -eq 1 ]; then
+  while true; do
+    read -p "Please add your Discord username: " discord_user </dev/tty
+    [ -n "$discord_user" ] && break
+    echo "Discord username cannot be blank."
+  done
+else
+  discord_user="anonymous"
+fi
 
 # Generate UTC timestamped filename and variable
 timestamp=$(date -u +%Y%m%dT%H%M%SZ)
@@ -40,6 +46,8 @@ print_host_line() {
   fi
   date -u
 # ---------- START OF COMMANDS TO PLACE IN LOG ----------
+REQUIRE_API_OFFLINE=1  # Set to 1 to require API offline event, 0 to always upload
+
   echo "Collection of logs for API offline, restarting..."
   echo
 
@@ -49,6 +57,13 @@ print_host_line() {
     echo "$docker_logs"
   else
     echo 'No "API proxy is offline, restarting.." events found in the last 24 hours.'
+    if [ "${REQUIRE_API_OFFLINE:-0}" -eq 1 ]; then
+      echo
+      echo "No API offline events found. Script will exit and not upload logs."
+      # Write a marker file so the main script can detect and exit
+      echo "NO_UPLOAD" > /tmp/nosana_no_upload_marker
+      exit 2
+    fi
   fi
   echo
 
@@ -101,6 +116,14 @@ print_host_line() {
   echo
 
 } > "$logfile"
+
+# Check for marker file and exit if present (no upload)
+if [ -f /tmp/nosana_no_upload_marker ]; then
+  echo
+  echo "No API offline events found in the last 24 hours. No log was uploaded."
+  rm -f /tmp/nosana_no_upload_marker "$logfile"
+  exit 0
+fi
 
 # trim logs (e.g. 9961472 = 9.5MB)
 # tail -c 9961472 "$logfile" > "${logfile%.log}-trimmed.log" && mv "${logfile%.log}-trimmed.log" "$logfile"

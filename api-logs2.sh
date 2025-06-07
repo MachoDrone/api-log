@@ -12,7 +12,7 @@ REQUIRE_DISCORD_USERNAME=1  # Set to 0 to disable Discord username prompt
 # Prompt for Discord username (force prompt, prevent blank)
 if [ "${REQUIRE_DISCORD_USERNAME:-1}" -eq 1 ]; then
   while true; do
-    read -p "Please add your Discord username: " discord_user </dev/tty
+    read -p "v6.7.814 Please add your Discord username: " discord_user </dev/tty
     [ -n "$discord_user" ] && break
     echo "Discord username cannot be blank."
   done
@@ -30,25 +30,6 @@ mapfile -t host_addrs < <(
   docker logs -t nosana-node | grep 'Wallet:' | awk '{print $3}' | \
   sed -r 's/\x1B\[[0-9;]*[mK]//g'
 )
-
-# ---------- START OF COMMANDS TO PLACE IN LOG ----------
-REQUIRE_API_OFFLINE=1  # Set to 1 to require API offline event, 0 to skip docker logs if not found
-
-# Search for API offline events
-api_event_logs=$(docker logs --timestamps --since 24h nosana-node 2>&1 | grep -E -C 21 "API proxy is offline, restarting..|Node API is detected offline" | grep -v "Error response from daemon: No such container:" | grep -v "command not found")
-
-if [ -z "$api_event_logs" ]; then
-  if [ "${REQUIRE_API_OFFLINE:-0}" -eq 1 ]; then
-    echo "No 'API proxy is offline, restarting..' or 'Node API is detected offline' events found in the last 24 hours."
-    echo "No API offline events found. Script will exit and not upload logs."
-    exit 0
-  else
-    SKIP_DOCKER_LOGS=1
-  fi
-else
-  SKIP_DOCKER_LOGS=0
-fi
-# ---------- END OF COMMANDS TO PLACE IN LOG ----------
 
 # Function to print Host line in new format
 print_host_line() {
@@ -71,7 +52,9 @@ print_host_line() {
   fi
   date -u
 
-  echo "Collection of logs for API offline, restarting..."
+# ---------- START OF COMMANDS TO PLACE IN LOG ----------
+
+  echo "Collection of logs for API offline, restarting... or Node API is detected offline' events found in the last 24 hours."
   echo
 
   echo "Docker logs (24hr):"
@@ -119,6 +102,8 @@ print_host_line() {
     echo
   fi
 
+# ---------- END OF COMMANDS TO PLACE IN LOG ----------
+
   # Bottom of log: print username and Host line again
   echo "Discord username: $discord_user"
   print_host_line "${host_addrs[0]}"
@@ -129,6 +114,23 @@ print_host_line() {
   echo
 
 } > "$logfile"
+
+REQUIRE_API_OFFLINE=1  # Set to 1 to require API offline event, 0 to skip docker logs if not found
+
+# Search for API offline events
+api_event_logs=$(docker logs --timestamps --since 24h nosana-node 2>&1 | grep -E -C 21 "API proxy is offline, restarting..|Node API is detected offline" | grep -v "Error response from daemon: No such container:" | grep -v "command not found")
+
+if [ -z "$api_event_logs" ]; then
+  if [ "${REQUIRE_API_OFFLINE:-0}" -eq 1 ]; then
+    echo "No 'API proxy is offline, restarting..' or 'Node API is detected offline' events found in the last 24 hours."
+    echo "No API offline events found. Script will exit and not upload logs."
+    exit 0
+  else
+    SKIP_DOCKER_LOGS=1
+  fi
+else
+  SKIP_DOCKER_LOGS=0
+fi
 
 # Prepend filename and size to the top of the log file (human-readable)
 filesize=$(ls -lh "$logfile" | awk '{print $5}')

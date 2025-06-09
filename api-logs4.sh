@@ -56,7 +56,7 @@ print_host_line() {
 } > "$logfile"
 
 # ---------- START OF COMMANDS TO PLACE IN LOG ----------
-REQUIRE_API_OFFLINE=1  # Set to 1 to require API offline event, 0 to skip docker logs if not found
+REQUIRE_API_OFFLINE=0  # Set to 1 to require API offline event, 0 to skip docker logs if not found
 
 # Search for API offline events
 api_event_logs=$(docker logs --timestamps --since 24h nosana-node 2>&1 | grep -E -C 21 "API proxy is offline, restarting..|Node API is detected offline" | grep -v "Error response from daemon: No such container:" | grep -v "command not found")

@@ -171,4 +171,4 @@ else
   echo "upload failed."
 fi
 
-rm -f "$logfile"
+#rm -f "$logfile"
